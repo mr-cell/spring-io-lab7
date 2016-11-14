@@ -2,3 +2,12 @@ info:
   myStaticInfo: whatever
   artifactid: @project.artifactId@
   version: @project.version@
+
+
+management:
+  shell:
+    auth:
+      simple:
+        user:
+          name: admin
+          password: pass
