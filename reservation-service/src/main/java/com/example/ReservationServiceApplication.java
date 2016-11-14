@@ -1,5 +1,6 @@
 package com.example;
 
+import static java.lang.String.format;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -28,7 +29,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.ResourceProcessor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -102,6 +107,19 @@ class ReservationController {
             methodOn(ReservationController.class).findOne(reservation.name))
         .toUri();
 	}
+}
+
+@Component
+class ReservationResourceProcessor implements ResourceProcessor<Resource<Reservation>> {
+
+    @Override
+    public Resource<Reservation> process(Resource<Reservation> resource) {
+        Reservation reservation = resource.getContent();
+        String url = format("https://www.google.pl/search?tbm=isch&q=%s",
+            reservation.getName());
+        resource.add(new Link(url, "photo"));
+        return resource;
+    }
 }
 
 @RepositoryRestResource
