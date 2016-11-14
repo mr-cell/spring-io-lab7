@@ -1,6 +1,7 @@
 package com.example;
 
 import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -22,6 +23,9 @@ import javax.persistence.UniqueConstraint;
 
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,13 +61,25 @@ public class ReservationServiceApplication {
 }
 
 @Configuration
-class ReservationsInit {
+class ReservationsExtras {
+
 	@Bean
-	public ApplicationRunner init(ReservationRepository reservations) {
+	public ApplicationRunner reservationsInit(ReservationRepository reservations) {
 		return args -> Arrays
 			.stream("Bartek,Marcel,Bartosz,Wojtek,Krzysztof,Daniel".split(","))
 			.map(Reservation::new)
 			.forEach(reservations::save);
+	}
+
+	@Bean
+	public HealthIndicator reservationsHealth() {
+		return () -> Health.status("This app is UP").build();
+	}
+
+	@Bean
+	public InfoContributor reservationsInfo() {
+		return builder -> builder
+			.withDetail("currentTime", currentTimeMillis()).build();
 	}
 }
 

@@ -1,0 +1,4 @@
+info:
+  myStaticInfo: whatever
+  artifactid: @project.artifactId@
+  version: @project.version@
