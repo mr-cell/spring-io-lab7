@@ -1,8 +1,5 @@
 package com.example;
 
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -15,10 +12,22 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
+
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.data.domain.Example;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,25 +48,30 @@ public class ReservationServiceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ReservationServiceApplication.class, args);
 	}
+
+	@Bean
+	public ApplicationRunner init(ReservationRepository reservations) {
+        return args -> Arrays
+            .stream("Bartek,Marcel,Bartosz,Wojtek,Krzysztof,Daniel".split(","))
+            .map(Reservation::new)
+            .forEach(reservations::save);
+    }
 }
 
 @Slf4j
 @RestController
-@RequestMapping("/reservations")
+@RequestMapping("/custom-reservations")
 class ReservationController {
 
-	Map<String, Reservation> reservations;
+	ReservationRepository reservations;
 
-	public ReservationController() {
-		this.reservations = Arrays
-			.stream("Bartek,Marcel,Bartosz,Wojtek,Krzysztof,Daniel".split(","))
-			.collect(toMap(identity(), Reservation::new));
-	}
+	public ReservationController(ReservationRepository reservations) {
+        this.reservations = reservations;
+    }
 
 	@GetMapping
 	public List<Reservation> list() {
-		return reservations.values().stream()
-			.collect(toList());
+		return reservations.findAll();
 	}
 
 	@RequestMapping(method = GET, path = "/{name}")
@@ -65,8 +79,9 @@ class ReservationController {
 //		return Optional.ofNullable(reservations.get(name))
 //				.map(ResponseEntity::ok)
 //				.orElse(notFound().build());
-		if (reservations.containsKey(name)) {
-			return ok(reservations.get(name));
+        Reservation reservation = reservations.findByName(name);
+        if (reservation != null) {
+			return ok(reservation);
 		} else {
 			return notFound().build();
 		}
@@ -75,10 +90,10 @@ class ReservationController {
 	@PostMapping
 	public ResponseEntity<?> create(@RequestBody Reservation reservation) {
 		log.info("Creating: {}", reservation);
-		if (reservations.containsKey(reservation.name)) {
+		if (reservations.exists(Example.of(reservation))) {
 			return status(CONFLICT).build();
 		}
-		reservations.put(reservation.name, reservation);
+		reservations.save(reservation);
 		return created(selfUri(reservation)).build();
 	}
 
@@ -89,12 +104,34 @@ class ReservationController {
 	}
 }
 
+@RepositoryRestResource
+interface ReservationRepository extends JpaRepository<Reservation, Long> {
+
+    @RestResource(path = "by-name", rel = "find-by-name")
+    Reservation findByName(@Param("name") String name);
+
+    @RestResource(exported = false)
+    @Override
+    void delete(Long id);
+}
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @ToString
+@Entity
+@Table(uniqueConstraints = {
+    @UniqueConstraint(columnNames = "name")
+})
 class Reservation {
 
-	String name;
+    @Id
+    @GeneratedValue
+    Long id;
 
+    String name;
+
+    Reservation(String name) {
+        this.name = name;
+    }
 }
