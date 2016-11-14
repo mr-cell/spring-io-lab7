@@ -24,6 +24,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Example;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
@@ -53,14 +54,17 @@ public class ReservationServiceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ReservationServiceApplication.class, args);
 	}
+}
 
+@Configuration
+class ReservationsInit {
 	@Bean
 	public ApplicationRunner init(ReservationRepository reservations) {
-        return args -> Arrays
-            .stream("Bartek,Marcel,Bartosz,Wojtek,Krzysztof,Daniel".split(","))
-            .map(Reservation::new)
-            .forEach(reservations::save);
-    }
+		return args -> Arrays
+			.stream("Bartek,Marcel,Bartosz,Wojtek,Krzysztof,Daniel".split(","))
+			.map(Reservation::new)
+			.forEach(reservations::save);
+	}
 }
 
 @Slf4j
