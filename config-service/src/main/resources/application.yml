@@ -1,0 +1,12 @@
+server:
+  port: 8889
+security:
+  user:
+    password: password
+  
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: file:///home/marcel/git/spring-io-lab7-config-repo

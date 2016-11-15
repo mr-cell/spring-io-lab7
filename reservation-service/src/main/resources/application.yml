@@ -13,5 +13,6 @@ management:
           password: pass
 
 graphite:
+  enabled: false
   host: localhost
   port: 2003

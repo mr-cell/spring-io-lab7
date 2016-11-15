@@ -21,15 +21,20 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.boot.actuate.metrics.CounterService;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Example;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
@@ -118,6 +123,47 @@ class ReservationsExtras {
 		return builder -> builder
 			.withDetail("currentTime", currentTimeMillis()).build();
 	}
+}
+
+@Slf4j
+@RestController
+@RequestMapping("/message")
+@EnableConfigurationProperties(MyMessage.class)
+class MessageController {
+	
+//	@Value("${message}")
+//	private String message;
+	
+//	private Environment environment;
+//		
+//	public MessageController(Environment environment) {
+//		this.environment = environment;
+//	}
+//	
+//	@RequestMapping(method = GET)
+//	public MyMessage getMessage() {
+//		String message = environment.getProperty("message");
+//		return new MyMessage(message);
+//	}
+	
+	private final MyMessage message;
+	
+	public MessageController(MyMessage message) {
+		this.message = message;
+	}
+	
+	@GetMapping
+	public MyMessage message() {
+		return new MyMessage(message.message);
+	}
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@ConfigurationProperties
+class MyMessage {
+	String message;	
 }
 
 @Slf4j
