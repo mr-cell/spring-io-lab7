@@ -11,3 +11,7 @@ management:
         user:
           name: admin
           password: pass
+
+graphite:
+  host: localhost
+  port: 2003

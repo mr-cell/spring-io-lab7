@@ -26,12 +26,17 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.actuate.info.InfoContributor;
+import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Example;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.rest.core.annotation.HandleAfterCreate;
+import org.springframework.data.rest.core.annotation.HandleAfterDelete;
+import org.springframework.data.rest.core.annotation.HandleAfterSave;
+import org.springframework.data.rest.core.annotation.RepositoryEventHandler;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 import org.springframework.data.rest.core.annotation.RestResource;
 import org.springframework.hateoas.Link;
@@ -58,6 +63,38 @@ public class ReservationServiceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ReservationServiceApplication.class, args);
 	}
+}
+
+@Slf4j
+@Component
+@RepositoryEventHandler
+class ReservationEventHandler {
+
+    private final CounterService counter;
+
+    public ReservationEventHandler(CounterService counter) {
+        this.counter = counter;
+    }
+
+    @HandleAfterCreate
+    public void create(Reservation reservation) {
+        log.info("Created reservation for {}.", reservation.name);
+        counter.increment("count");
+        counter.increment("create");
+    }
+
+    @HandleAfterSave
+    public void save(Reservation reservation) {
+        log.info("Updated reservation for {}.", reservation.name);
+        counter.increment("save");
+    }
+
+    @HandleAfterDelete
+    public void delete(Reservation reservation) {
+        log.info("Removed reservation for {}.", reservation.name);
+        counter.decrement("count");
+        counter.increment("delete");
+    }
 }
 
 @Configuration
