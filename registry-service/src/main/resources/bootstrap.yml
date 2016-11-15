@@ -3,6 +3,9 @@ spring:
         name: registryservice
     cloud:
         config:
+            #discovery:
+            #    enabled: true
+            #    serviceId: http://localhost:8765/eureka
             uri: http://localhost:8889
             fail-fast: true
             label: master

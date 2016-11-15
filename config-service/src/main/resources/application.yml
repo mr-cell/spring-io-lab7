@@ -5,8 +5,20 @@ security:
     password: password
   
 spring:
+  application:
+    name: configserver
   cloud:
     config:
       server:
         git:
           uri: file:///home/marcel/git/spring-io-lab7-config-repo
+info:
+  instanceId: ${spring.application.name}-${random.value}
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8765/eureka
+  instance:
+    preferIpAddress: true
+    instanceId: ${info.instanceId}
+          
