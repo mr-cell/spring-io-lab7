@@ -1,11 +1,14 @@
 package com.example;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
@@ -14,13 +17,17 @@ import org.springframework.cloud.netflix.feign.FeignClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -30,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableFeignClients
+@EnableCircuitBreaker
 public class ReservationClientApplication {
 
 	public static void main(String[] args) {
@@ -57,12 +65,23 @@ class ReservationsExtras {
 	}
 }
 
-@FeignClient(name = "reservationservice")
+@FeignClient(name = "reservationservice", fallback = ReservationsClientFallback.class)
 interface ReservationsClient {
 	
 	@RequestMapping(method = RequestMethod.GET, path="/reservations")
 	Resources<ReservationPayload> getReservations();
 	
+}
+
+@Component
+class ReservationsClientFallback implements ReservationsClient {
+
+	@Override
+	public Resources<ReservationPayload> getReservations() {
+		List<ReservationPayload> reservations = new ArrayList<>();
+		
+		return new Resources<>(new ArrayList<ReservationPayload>(), new ArrayList<Link>());
+	}
 }
 
 @Slf4j
