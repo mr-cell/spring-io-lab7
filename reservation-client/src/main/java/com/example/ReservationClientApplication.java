@@ -9,6 +9,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.cloud.netflix.feign.EnableFeignClients;
+import org.springframework.cloud.netflix.feign.FeignClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.ParameterizedTypeReference;
@@ -27,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @SpringBootApplication
 @EnableDiscoveryClient
+@EnableFeignClients
 public class ReservationClientApplication {
 
 	public static void main(String[] args) {
@@ -54,24 +57,40 @@ class ReservationsExtras {
 	}
 }
 
+@FeignClient(name = "reservationservice")
+interface ReservationsClient {
+	
+	@RequestMapping(method = RequestMethod.GET, path="/reservations")
+	Resources<ReservationPayload> getReservations();
+	
+}
+
 @Slf4j
 @RestController
 @RequestMapping("/reservations")
 class ReservationClientController {
 	
-	private RestTemplate restTemplate;
+//	private RestTemplate restTemplate;
+	private ReservationsClient reservationsClient;
 	
-	ReservationClientController(RestTemplate restTemplate) {
-		this.restTemplate = restTemplate;
+//	ReservationClientController(RestTemplate restTemplate) {
+//		this.restTemplate = restTemplate;
+//	}
+	
+	public ReservationClientController(ReservationsClient reservations) {
+		this.reservationsClient = reservations;
 	}
 	
 	@RequestMapping(path = "/names", method = RequestMethod.GET)
 	public List<String> getNames() {
-		ParameterizedTypeReference<Resources<ReservationPayload>> resultType = 
-				new ParameterizedTypeReference<Resources<ReservationPayload>>() { };
-		ResponseEntity<Resources<ReservationPayload>> reservations =
-				restTemplate.exchange("http://reservationservice/reservations", HttpMethod.GET, null, resultType);
-		return reservations.getBody().getContent().stream()
+//		ParameterizedTypeReference<Resources<ReservationPayload>> resultType = 
+//				new ParameterizedTypeReference<Resources<ReservationPayload>>() { };
+//		ResponseEntity<Resources<ReservationPayload>> reservations =
+//				restTemplate.exchange("http://reservationservice/reservations", HttpMethod.GET, null, resultType);
+		Resources<ReservationPayload> reservations = reservationsClient.getReservations();
+		return reservations
+//				.getBody()
+				.getContent().stream()
 				.map(ReservationPayload::getName)
 				.collect(Collectors.toList());		
 	}
