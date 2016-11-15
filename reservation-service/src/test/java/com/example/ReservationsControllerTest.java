@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,6 @@ public class ReservationsControllerTest {
         // then: MockMvcResultMatchers...
             .andExpect(status().isOk())
             .andExpect(jsonPath("@.id").value("5"))
-            .andExpect(jsonPath("@.name").value("Krzysiek"));
+            .andExpect(jsonPath("@.name").value(CoreMatchers.startsWith("Krzysiek")));
     }
 }

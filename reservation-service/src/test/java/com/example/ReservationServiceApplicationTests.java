@@ -5,7 +5,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
+import org.junit.experimental.results.ResultMatchers;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -27,7 +29,7 @@ public class ReservationServiceApplicationTests {
 			.andDo(print())
 
         // then
-			.andExpect(jsonPath("@.name").value("Bartek"))
+			.andExpect(jsonPath("@.name").value(CoreMatchers.startsWith("Bartek")))
 			.andExpect(jsonPath("@._links.photo.href").exists());
 	}
 }

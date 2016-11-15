@@ -223,6 +223,9 @@ class ReservationController {
 
 @Component
 class ReservationResourceProcessor implements ResourceProcessor<Resource<Reservation>> {
+	
+	@Value("${info.instanceId}")
+	private String instanceId;
 
     @Override
     public Resource<Reservation> process(Resource<Reservation> resource) {
@@ -230,7 +233,10 @@ class ReservationResourceProcessor implements ResourceProcessor<Resource<Reserva
         String url = format("https://www.google.pl/search?tbm=isch&q=%s",
             reservation.getName());
         resource.add(new Link(url, "photo"));
-        return resource;
+        return new Resource<Reservation>(new Reservation(
+        			resource.getContent().getId(), 
+        			resource.getContent().getName() + " " + instanceId
+        		), resource.getLinks());
     }
 }
 
