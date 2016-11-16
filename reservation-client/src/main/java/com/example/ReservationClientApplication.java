@@ -22,12 +22,18 @@ import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.netflix.feign.EnableFeignClients;
 import org.springframework.cloud.netflix.feign.FeignClient;
 import org.springframework.cloud.netflix.hystrix.EnableHystrix;
+import org.springframework.cloud.stream.annotation.EnableBinding;
+import org.springframework.cloud.stream.annotation.Output;
+import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.support.GenericMessage;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 @EnableDiscoveryClient
 @EnableFeignClients
 @EnableCircuitBreaker
+@EnableBinding(ReservationsBinding.class)
 public class ReservationClientApplication {
 
 	public static void main(String[] args) {
@@ -134,6 +141,11 @@ class ReservationsClientFallback implements ReservationsClient {
 	}
 }
 
+interface ReservationsBinding {
+	@Output("createReservation")
+	MessageChannel createReservation();
+}
+
 @Slf4j
 @RestController
 @RequestMapping("/reservations")
@@ -142,12 +154,15 @@ class ReservationsController {
 	private final RestTemplate rest;
 	private final ReservationsClient client;
     private final VerifierClient verifier;
+    
+    private final ReservationsBinding reservationsBinding;
 
     public ReservationsController(RestTemplate rest, ReservationsClient client,
-                                  VerifierClient verifier) {
+                                  VerifierClient verifier, ReservationsBinding reservationsBinding) {
 		this.rest = rest;
 		this.client = client;
         this.verifier = verifier;
+        this.reservationsBinding = reservationsBinding;
     }
 
 	@GetMapping("/names")
@@ -175,9 +190,14 @@ class ReservationsController {
 		log.info("Calling create...");
         VerificationResult result = verifier.check(request);
         if (result.isEligible()) {
-        	return client.createReservation(new Reservation(request.getName()));
+        	if(reservationsBinding.createReservation().send(
+        			MessageBuilder.withPayload(new Reservation(request.getName())).build())){
+        		return client.createReservation(new Reservation(request.getName()));
+        	} else {
+        		return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        	}
         } else {
-            return ResponseEntity.status(EXPECTATION_FAILED).build();
+        	return ResponseEntity.status(EXPECTATION_FAILED).build();
         }
 	}
 }

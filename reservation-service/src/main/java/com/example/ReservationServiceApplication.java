@@ -33,6 +33,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.stream.annotation.EnableBinding;
+import org.springframework.cloud.stream.annotation.Input;
+import org.springframework.cloud.stream.annotation.Output;
+import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -50,6 +54,9 @@ import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceProcessor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.integration.annotation.MessageEndpoint;
+import org.springframework.integration.annotation.ServiceActivator;
+import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -65,10 +72,25 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @SpringBootApplication
+@EnableBinding(Sink.class)
 public class ReservationServiceApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ReservationServiceApplication.class, args);
+	}
+	
+	@Bean
+	ReservationsReceiver reservationsReceiver() {
+		return new ReservationsReceiver();
+	}
+}
+
+@MessageEndpoint
+class ReservationsReceiver {
+	
+	@ServiceActivator(inputChannel = "input")
+	public void receive() {
+		
 	}
 }
 
