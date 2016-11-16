@@ -5,20 +5,22 @@ info:
   instanceId: ${spring.application.name}-${random.value}
 
 spring:
-  profiles:
-    active: cloud
-  application:
-    name: verifierservice
-  cloud:
-    config:
-      discovery:
-        enabled: true
-        service-id: configservice
-
+    profiles: 
+        active: cloud
+    application:
+        name: verifierservice
+    cloud:
+        config:
+            discovery:
+                enabled: true
+                serviceId: CONFIGSERVER
+            #uri: http://localhost:8889
+            fail-fast: true
+            label: master
+            password: password
+            username: user
 eureka:
-  instance:
-    preferIpAddress: true
-    instanceId: ${info.instanceId}
   client:
     serviceUrl:
-      defaultZone: http://localhost:8765/eureka/
+      defaultZone: http://localhost:8765/eureka
+            

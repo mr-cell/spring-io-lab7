@@ -113,6 +113,9 @@ interface ReservationsClient {
 
 	@RequestMapping(path = "/reservations", method = RequestMethod.GET)
 	Resources<Reservation> listReservations();
+	
+	@RequestMapping(path = "/reservations", method = RequestMethod.POST)
+	ResponseEntity<Void> createReservation(@RequestBody Reservation reservation);
 }
 
 @Component
@@ -123,6 +126,11 @@ class ReservationsClientFallback implements ReservationsClient {
 		return new Resources<>(asList("This is fallback".split(" ")).stream()
 			.map(Reservation::new)
 			.collect(toList()));
+	}
+
+	@Override
+	public ResponseEntity<Void> createReservation(Reservation reservation) {
+		return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
 	}
 }
 
@@ -164,9 +172,10 @@ class ReservationsController {
 
 	@PostMapping
 	public ResponseEntity<?> create(@RequestBody ReservationRequest request) {
+		log.info("Calling create...");
         VerificationResult result = verifier.check(request);
         if (result.isEligible()) {
-            return ResponseEntity.status(CREATED).build();
+        	return client.createReservation(new Reservation(request.getName()));
         } else {
             return ResponseEntity.status(EXPECTATION_FAILED).build();
         }
